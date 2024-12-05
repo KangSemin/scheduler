@@ -1,13 +1,17 @@
 package com.semin.scheduler.service;
 
 import com.semin.scheduler.domain.Schedule;
+import com.semin.scheduler.dto.ScheduleDeleteRequest;
 import com.semin.scheduler.dto.ScheduleRequest;
 import com.semin.scheduler.dto.ScheduleResponse;
+import com.semin.scheduler.dto.ScheduleUpdateRequest;
 import com.semin.scheduler.repository.ScheduleRepository;
 import org.springframework.stereotype.Service;
 
+import javax.swing.text.html.Option;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -46,6 +50,28 @@ public class ScheduleServiceImpl implements ScheduleService {
 		scheduleRepository.save(schedule);
 	}
 
+	@Override
+	public void updateSchedule(Long id, ScheduleUpdateRequest request) {
+		Optional<Schedule> scheduleOp = scheduleRepository.findByIdAndPassword(id, request.getPassword());
+		Schedule schedule = scheduleOp.orElseThrow(() ->
+				new IllegalArgumentException("can't find schedule or wrong password."));
+
+		schedule.setTitle(request.getTitle());
+		schedule.setDescription(request.getDescription());
+		schedule.setUpdatedTime(LocalDateTime.now());
+		scheduleRepository.update(schedule);
+
+	}
+
+	@Override
+	public void deleteSchedule(Long id,ScheduleDeleteRequest request) {
+		Optional<Schedule> scheduleOp = scheduleRepository.findByIdAndPassword(id, request.getPassword());
+		Schedule schedule = scheduleOp.orElseThrow(() ->
+				new IllegalArgumentException("can't find schedule or wrong password."));
+
+		scheduleRepository.deleteById(schedule.getId());
+	}
+
 	private ScheduleResponse getScheduleResponse(Schedule schedule) {
 		ScheduleResponse scheduleResponse = new ScheduleResponse();
 		scheduleResponse.setId(schedule.getId());
@@ -57,13 +83,5 @@ public class ScheduleServiceImpl implements ScheduleService {
 		return scheduleResponse;
 	}
 
-//	@Override
-//	public void updateSchedule(Long id, ScheduleRequest scheduleRequest) {
-//
-//	}
-//
-//	@Override
-//	public void deleteSchedule(User user, Schedule schedule) {
-//
-//	}
+
 }

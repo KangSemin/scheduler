@@ -7,7 +7,5 @@ import lombok.Setter;
 @Setter
 public class ScheduleDeleteRequest {
 
-	private Long id;
 	private String password;
-
 }
