@@ -25,7 +25,7 @@ public class ScheduleRepositoryImpl implements ScheduleRepository{
 	@Override
 	public List<Schedule> findAll() {
 
-		String sql = "select * from ScheduleManagementApplicationSchema.schedules";
+		String sql = "SELECT * from ScheduleManagementApplicationSchema.schedules";
 
 		return jdbcTemplate.query(sql, ScheduleRepositoryImpl::mapRow);
 
@@ -49,7 +49,16 @@ public class ScheduleRepositoryImpl implements ScheduleRepository{
 
 	@Override
 	public void save(Schedule schedule) {
+		String sql ="Insert into ScheduleManagementApplicationSchema.schedules (title, description, posted_time, updated_time, username, password) VALUES (?,?,?,?,?,?)";
+		jdbcTemplate.update(sql,
 
+				schedule.getTitle(),
+				schedule.getDescription(),
+				schedule.getPostedTime(),
+				schedule.getUpdatedTime(),
+				schedule.getUserName(),
+				schedule.getPassword()
+				);
 	}
 
 	private static Schedule mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -61,10 +70,10 @@ public class ScheduleRepositoryImpl implements ScheduleRepository{
 		schedule.setId(rs.getLong("id"));
 		schedule.setTitle(rs.getString("title"));
 		schedule.setDescription(rs.getString("description"));
-		schedule.setUserName(rs.getString("userName"));
+		schedule.setUserName(rs.getString("username"));
 		schedule.setPassword(rs.getString("password"));
-		schedule.setPostedTime(rs.getTimestamp("postedTime").toLocalDateTime());
-		schedule.setPostedTime(rs.getTimestamp("updatedTime").toLocalDateTime());
+		schedule.setPostedTime(rs.getTimestamp("posted_time").toLocalDateTime());
+		schedule.setUpdatedTime(rs.getTimestamp("updated_time").toLocalDateTime());
 		return schedule;
 	}
 

@@ -15,7 +15,7 @@ public class DBConfig {
 	public DataSource dataSource() {
 		DriverManagerDataSource dataSource = new DriverManagerDataSource();
 		dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-		dataSource.setUrl("jdbc:mysql://localhost:3306/ScheduleManagementApplicationSchema?useSSL=false&serverTimezone=UTC");
+		dataSource.setUrl("jdbc:mysql://localhost:3306/ScheduleManagementApplicationSchema?useSSL=false&serverTimezone=Asia/Seoul");
 		dataSource.setUsername("root");
 		dataSource.setPassword("tpals123");
 		return dataSource;
