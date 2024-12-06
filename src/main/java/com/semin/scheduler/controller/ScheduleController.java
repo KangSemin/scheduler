@@ -8,7 +8,10 @@ import com.semin.scheduler.service.ScheduleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("api/schedules")
@@ -35,6 +38,18 @@ public class ScheduleController {
 	public ScheduleResponse getScheduleById(@PathVariable Long id) {
 		return scheduleService.getScheduleById(id);
 	}
+
+	@GetMapping("/search")
+	public List<ScheduleResponse> searchSchedules(
+			@RequestParam(required = false) String name,
+			@RequestParam(required = false) LocalDate date) {
+
+		return scheduleService.getScheduleByNameAndDate(
+				Optional.ofNullable(name),
+				Optional.ofNullable(date)
+		);
+	}
+
 
 	@PatchMapping("/{id}")
 	public ResponseEntity<Void> updateSchedule(@PathVariable Long id, @RequestBody ScheduleUpdateRequest request) {

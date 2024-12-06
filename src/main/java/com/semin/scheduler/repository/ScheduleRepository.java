@@ -2,6 +2,7 @@ package com.semin.scheduler.repository;
 
 import com.semin.scheduler.domain.Schedule;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -18,4 +19,5 @@ public interface ScheduleRepository {
 	void deleteById(Long id); //삭제
 	void update(Schedule schedule); //수정
 
+	List<Schedule> findByNameAndDate(Optional<String> name, Optional<LocalDate> date);
 }

@@ -8,7 +8,7 @@ import com.semin.scheduler.dto.ScheduleUpdateRequest;
 import com.semin.scheduler.repository.ScheduleRepository;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.Option;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,11 +31,17 @@ public class ScheduleServiceImpl implements ScheduleService {
 				.map(this::getScheduleResponse).collect(Collectors.toList());
 	}
 
-
 	@Override
 	public ScheduleResponse getScheduleById(Long id) {
 		Schedule schedule = scheduleRepository.findById(id);
 		return getScheduleResponse(schedule);
+	}
+
+	@Override
+	public List<ScheduleResponse> getScheduleByNameAndDate(Optional<String> name, Optional<LocalDate> date) {
+		return scheduleRepository.findByNameAndDate(name,date).stream()
+				.map(this::getScheduleResponse).collect(Collectors.toList());
+
 	}
 
 	@Override
@@ -60,7 +66,6 @@ public class ScheduleServiceImpl implements ScheduleService {
 		schedule.setDescription(request.getDescription());
 		schedule.setUpdatedTime(LocalDateTime.now());
 		scheduleRepository.update(schedule);
-
 	}
 
 	@Override
@@ -71,6 +76,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
 		scheduleRepository.deleteById(schedule.getId());
 	}
+
 
 	private ScheduleResponse getScheduleResponse(Schedule schedule) {
 		ScheduleResponse scheduleResponse = new ScheduleResponse();

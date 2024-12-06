@@ -6,9 +6,12 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -82,6 +85,38 @@ public class ScheduleRepositoryImpl implements ScheduleRepository {
 	public void update(Schedule schedule) {
 		String sql = "UPDATE ScheduleManagementApplicationSchema.schedules SET title = ?, description = ?, updated_time = NOW() WHERE id = ?";
 		jdbcTemplate.update(sql, schedule.getTitle(), schedule.getDescription(), schedule.getId());
+	}
+
+	@Override
+	public List<Schedule> findByNameAndDate(Optional<String> name, Optional<LocalDate> date) {
+
+		StringBuilder sql = new StringBuilder("SELECT * FROM schedules WHERE 1=1");
+		List<Object> params = new ArrayList<>();
+
+		if (name.isPresent()) {
+			sql.append(" AND username = ?");
+			params.add(name.get());
+		}
+
+		if (date.isPresent()) {
+			sql.append(" AND DATE(posted_time) = ?");
+			params.add(date.get());
+		}
+
+		return jdbcTemplate.query(
+				sql.toString(),
+				params.toArray(),
+				(rs, rowNum) -> {
+					Schedule schedule = new Schedule();
+					schedule.setId(rs.getLong("id"));
+					schedule.setTitle(rs.getString("title"));
+					schedule.setDescription(rs.getString("description"));
+					schedule.setUserName(rs.getString("username"));
+					schedule.setPassword(rs.getString("password"));
+					schedule.setPostedTime(rs.getTimestamp("posted_time").toLocalDateTime());
+					schedule.setUpdatedTime(rs.getTimestamp("updated_time").toLocalDateTime());
+					return schedule;
+				});
 	}
 
 	@Override
