@@ -1,16 +1,16 @@
 package com.semin.scheduler.repository;
 
 import com.semin.scheduler.domain.Schedule;
+import com.semin.scheduler.dto.ScheduleSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -37,20 +37,22 @@ public class ScheduleRepositoryImpl implements ScheduleRepository {
 			String sql = "SELECT * FROM ScheduleManagementApplicationSchema.schedules WHERE id = ?";
 			return jdbcTemplate.queryForObject(sql, new Object[]{id}, (rs, rowNum) -> getSchedule(rs));
 		} catch (EmptyResultDataAccessException e) {
-			return null;  // 또는 Optional.empty()를 반환해도 좋다
+			ResponseEntity.status(HttpStatus.NOT_FOUND);
+			return null ;
 		}
 	}
 
 	@Override
-	public void save(Schedule schedule) {
-		String sql = "INSERT INTO ScheduleManagementApplicationSchema.schedules (title, description, posted_time, updated_time, username, password) VALUES (?,?,?,?,?,?)";
-		jdbcTemplate.update(sql,
+	public void save(Schedule schedule, Long userId) {
+
+		String scheduleSql = "INSERT INTO ScheduleManagementApplicationSchema.schedules (title, task, posted_time, updated_time,user_id) VALUES (?,?,?,?,?)";
+
+		jdbcTemplate.update(scheduleSql,
 				schedule.getTitle(),
-				schedule.getDescription(),
+				schedule.getTask(),
 				schedule.getPostedTime(),
 				schedule.getUpdatedTime(),
-				schedule.getUserName(),
-				schedule.getPassword()
+				userId
 		);
 	}
 
@@ -62,66 +64,65 @@ public class ScheduleRepositoryImpl implements ScheduleRepository {
 		Schedule schedule = new Schedule();
 		schedule.setId(rs.getLong("id"));
 		schedule.setTitle(rs.getString("title"));
-		schedule.setDescription(rs.getString("description"));
-		schedule.setUserName(rs.getString("username"));
-		schedule.setPassword(rs.getString("password"));
+		schedule.setTask(rs.getString("task"));
 		schedule.setPostedTime(rs.getTimestamp("posted_time").toLocalDateTime());
 		schedule.setUpdatedTime(rs.getTimestamp("updated_time").toLocalDateTime());
 		return schedule;
 	}
 
 	@Override
-	public Optional<Schedule> findByIdAndPassword(Long id, String password) {
-		try {
-			String sql = "SELECT * FROM ScheduleManagementApplicationSchema.schedules WHERE id = ? AND password = ?";
-			Schedule schedule = jdbcTemplate.queryForObject(sql, new Object[]{id, password}, (rs, rowNum) -> getSchedule(rs));
-			return Optional.ofNullable(schedule);
-		} catch (EmptyResultDataAccessException e) {
-			return Optional.empty();
-		}
-	}
-
-	@Override
 	public void update(Schedule schedule) {
-		String sql = "UPDATE ScheduleManagementApplicationSchema.schedules SET title = ?, description = ?, updated_time = NOW() WHERE id = ?";
-		jdbcTemplate.update(sql, schedule.getTitle(), schedule.getDescription(), schedule.getId());
+		String sql = "UPDATE ScheduleManagementApplicationSchema.schedules SET title = ?, task = ?, updated_time = NOW() WHERE id = ?";
+		jdbcTemplate.update(sql, schedule.getTitle(), schedule.getTask(), schedule.getId());
 	}
 
 	@Override
-	public List<Schedule> findByNameAndDate(Optional<String> name, Optional<LocalDate> date) {
-
-		StringBuilder sql = new StringBuilder("SELECT * FROM schedules WHERE 1=1");
+	public List<Schedule> findByUserIdOrDate(ScheduleSearchRequest request) {
+		StringBuilder sql = new StringBuilder(
+			"SELECT s.* FROM ScheduleManagementApplicationSchema.schedules s WHERE 1=1"
+		);
 		List<Object> params = new ArrayList<>();
 
-		if (name.isPresent()) {
-			sql.append(" AND username = ?");
-			params.add(name.get());
+		if (request.getUserId().isPresent()) {
+			sql.append(" AND s.user_id = ?");
+			params.add(request.getUserId().get());
 		}
 
-		if (date.isPresent()) {
-			sql.append(" AND DATE(posted_time) = ?");
-			params.add(date.get());
+		if (request.getDate().isPresent()) {
+			sql.append(" AND DATE(s.posted_time) = ?");
+			params.add(request.getDate().get());
 		}
+
+		sql.append(" ORDER BY s.posted_time DESC");
 
 		return jdbcTemplate.query(
-				sql.toString(),
-				params.toArray(),
-				(rs, rowNum) -> {
-					Schedule schedule = new Schedule();
-					schedule.setId(rs.getLong("id"));
-					schedule.setTitle(rs.getString("title"));
-					schedule.setDescription(rs.getString("description"));
-					schedule.setUserName(rs.getString("username"));
-					schedule.setPassword(rs.getString("password"));
-					schedule.setPostedTime(rs.getTimestamp("posted_time").toLocalDateTime());
-					schedule.setUpdatedTime(rs.getTimestamp("updated_time").toLocalDateTime());
-					return schedule;
-				});
+			sql.toString(),
+			params.toArray(),
+			(rs, rowNum) -> getSchedule(rs)
+		);
 	}
 
 	@Override
 	public void deleteById(Long id) {
 		String sql = "DELETE FROM ScheduleManagementApplicationSchema.schedules WHERE id = ?";
 		jdbcTemplate.update(sql, id);
+	}
+
+	@Override
+	public Optional<Schedule> findByIdAndPassword(Long scheduleId, String password) {
+		try {
+			String sql = "SELECT s.* FROM ScheduleManagementApplicationSchema.schedules s " +
+						"JOIN ScheduleManagementApplicationSchema.users u ON s.user_id = u.id " +
+						"WHERE s.id = ? AND u.password = ?";
+						
+			Schedule schedule = jdbcTemplate.queryForObject(
+				sql,
+				new Object[]{scheduleId, password},
+				(rs, rowNum) -> getSchedule(rs)
+			);
+			return Optional.ofNullable(schedule);
+		} catch (EmptyResultDataAccessException e) {
+			return Optional.empty();
+		}
 	}
 }

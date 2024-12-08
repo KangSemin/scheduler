@@ -2,6 +2,7 @@ package com.semin.scheduler.domain;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -11,9 +12,7 @@ public class Schedule {
 
 	private Long id;
 	private String title;
-	private String description;
-	private String userName;
-	private String password;
+	private String task;
 	private LocalDateTime postedTime;
 	private LocalDateTime updatedTime;
 

@@ -1,8 +1,8 @@
 package com.semin.scheduler.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
-
 import java.time.LocalDateTime;
 
 @Getter
@@ -10,8 +10,11 @@ import java.time.LocalDateTime;
 public class ScheduleResponse {
 	private Long id;
 	private String title;
-	private String description;
-	private String userName;
+	private String task;
+	
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm")
 	private LocalDateTime createdAt;
+	
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm")
 	private LocalDateTime updatedAt;
 }

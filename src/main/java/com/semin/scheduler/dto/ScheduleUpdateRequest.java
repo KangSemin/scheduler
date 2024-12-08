@@ -7,6 +7,6 @@ import lombok.Setter;
 @Setter
 public class ScheduleUpdateRequest {
 	private String title;
-	private String description;
+	private String task;
 	private String password;
 }
