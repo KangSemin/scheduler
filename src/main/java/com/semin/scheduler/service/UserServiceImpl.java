@@ -41,5 +41,4 @@ public class UserServiceImpl implements UserService {
 		return userRepository.findUserId(user);
 	}
 
-
 }

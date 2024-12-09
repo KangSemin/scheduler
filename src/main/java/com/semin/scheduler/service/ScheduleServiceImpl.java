@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -51,7 +52,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
 	@Override
 	@Transactional
-	public void createSchedule(ScheduleRequest request) {
+	public ScheduleResponse save(ScheduleRequest request) {
 		UserUpdateRequest userRequest = new UserUpdateRequest(
 			request.getUserName(), 
 			request.getPassword()
@@ -66,10 +67,12 @@ public class ScheduleServiceImpl implements ScheduleService {
 		Schedule schedule = new Schedule();
 		schedule.setTitle(request.getTitle());
 		schedule.setTask(request.getTask());
+		schedule.setUserName(request.getUserName());
 		schedule.setPostedTime(LocalDateTime.now());
 		schedule.setUpdatedTime(LocalDateTime.now());
 
 		scheduleRepository.save(schedule, userId);
+		return getScheduleResponse(schedule);
 	}
 
 	@Override
@@ -104,15 +107,53 @@ public class ScheduleServiceImpl implements ScheduleService {
 		scheduleRepository.deleteById(schedule.getId());
 	}
 
+	@Override
+	@Transactional(readOnly = true)
+	public PageResponse<ScheduleResponse> getAllSchedulesWithPaging(int page, int size) {
+
+		if (page < 0) page = 0;
+		if (size <= 0) size = 10;
+
+		int offset = page * size;
+		long totalElements = scheduleRepository.count();
+		int totalPages = (int) Math.ceil((double) totalElements / size);
+
+		if (page >= totalPages) {
+			return new PageResponse<>(
+				Collections.emptyList(),
+				page,
+				totalPages,
+				totalElements,
+				size
+			);
+		}
+
+		List<ScheduleResponse> content = scheduleRepository.findAllWithPaging(offset, size)
+				.stream()
+				.map(this::getScheduleResponse)
+				.collect(Collectors.toList());
+
+		return new PageResponse<>(
+			content,
+			page,
+			totalPages,
+			totalElements,
+			size
+		);
+	}
+
 
 	private ScheduleResponse getScheduleResponse(Schedule schedule) {
-			ScheduleResponse response = new ScheduleResponse();
-			response.setId(schedule.getId());
-			response.setTitle(schedule.getTitle());
-			response.setTask(schedule.getTask());
-			response.setCreatedAt(schedule.getPostedTime());
-			response.setUpdatedAt(schedule.getUpdatedTime());
-			return response;
+		
+		ScheduleResponse response = new ScheduleResponse();
+		response.setId(schedule.getId());
+		response.setTitle(schedule.getTitle());
+		response.setTask(schedule.getTask());
+		response.setUserName(schedule.getUserName());
+		response.setCreatedAt(schedule.getPostedTime());
+		response.setUpdatedAt(schedule.getUpdatedTime());
+
+		return response;
 	}
 
 

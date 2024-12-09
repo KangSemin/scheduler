@@ -11,10 +11,12 @@ public interface ScheduleService {
 
 	List<ScheduleResponse> getScheduleByUserIdOrDate(ScheduleSearchRequest request);
 
-	void createSchedule(ScheduleRequest request);
-
 	void updateSchedule(Long id, ScheduleUpdateRequest request);
 
 	void deleteSchedule(Long id, ScheduleDeleteRequest request);
+
+	PageResponse<ScheduleResponse> getAllSchedulesWithPaging(int page, int size);
+
+	ScheduleResponse save(ScheduleRequest request);
 
 }

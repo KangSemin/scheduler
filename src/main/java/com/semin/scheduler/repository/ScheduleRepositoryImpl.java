@@ -4,8 +4,6 @@ import com.semin.scheduler.domain.Schedule;
 import com.semin.scheduler.dto.ScheduleSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -27,18 +25,20 @@ public class ScheduleRepositoryImpl implements ScheduleRepository {
 
 	@Override
 	public List<Schedule> findAll() {
-		String sql = "SELECT * FROM ScheduleManagementApplicationSchema.schedules";
-		return jdbcTemplate.query(sql, ScheduleRepositoryImpl::mapRow);
+		String sql = "SELECT s.*, u.username FROM ScheduleManagementApplicationSchema.schedules s " +
+					"JOIN ScheduleManagementApplicationSchema.users u ON s.user_id = u.id order by s.updated_time desc ";
+		return jdbcTemplate.query(sql, this::mapRowWithUsername);
 	}
 
 	@Override
 	public Schedule findById(Long id) {
 		try {
-			String sql = "SELECT * FROM ScheduleManagementApplicationSchema.schedules WHERE id = ?";
-			return jdbcTemplate.queryForObject(sql, new Object[]{id}, (rs, rowNum) -> getSchedule(rs));
+			String sql = "SELECT s.*, u.username FROM ScheduleManagementApplicationSchema.schedules s " +
+						"JOIN ScheduleManagementApplicationSchema.users u ON s.user_id = u.id " +
+						"WHERE s.id = ?";
+			return jdbcTemplate.queryForObject(sql, new Object[]{id}, this::mapRowWithUsername);
 		} catch (EmptyResultDataAccessException e) {
-			ResponseEntity.status(HttpStatus.NOT_FOUND);
-			return null ;
+			return null;
 		}
 	}
 
@@ -79,7 +79,9 @@ public class ScheduleRepositoryImpl implements ScheduleRepository {
 	@Override
 	public List<Schedule> findByUserIdOrDate(ScheduleSearchRequest request) {
 		StringBuilder sql = new StringBuilder(
-			"SELECT s.* FROM ScheduleManagementApplicationSchema.schedules s WHERE 1=1"
+			"SELECT s.*, u.username FROM ScheduleManagementApplicationSchema.schedules s " +
+			"JOIN ScheduleManagementApplicationSchema.users u ON s.user_id = u.id " +
+			"WHERE 1=1"
 		);
 		List<Object> params = new ArrayList<>();
 
@@ -98,7 +100,7 @@ public class ScheduleRepositoryImpl implements ScheduleRepository {
 		return jdbcTemplate.query(
 			sql.toString(),
 			params.toArray(),
-			(rs, rowNum) -> getSchedule(rs)
+			this::mapRowWithUsername
 		);
 	}
 
@@ -111,18 +113,43 @@ public class ScheduleRepositoryImpl implements ScheduleRepository {
 	@Override
 	public Optional<Schedule> findByIdAndPassword(Long scheduleId, String password) {
 		try {
-			String sql = "SELECT s.* FROM ScheduleManagementApplicationSchema.schedules s " +
-						"JOIN ScheduleManagementApplicationSchema.users u ON s.user_id = u.id " +
-						"WHERE s.id = ? AND u.password = ?";
-						
+			String sql = "SELECT s.*, u.username FROM ScheduleManagementApplicationSchema.schedules s " +
+					"JOIN ScheduleManagementApplicationSchema.users u ON s.user_id = u.id " +
+					"WHERE s.id = ? AND u.password = ?";
+
 			Schedule schedule = jdbcTemplate.queryForObject(
-				sql,
-				new Object[]{scheduleId, password},
-				(rs, rowNum) -> getSchedule(rs)
+					sql,
+					new Object[]{scheduleId, password},
+					this::mapRowWithUsername
 			);
 			return Optional.ofNullable(schedule);
 		} catch (EmptyResultDataAccessException e) {
 			return Optional.empty();
 		}
+	}
+
+	@Override
+	public List<Schedule> findAllWithPaging(int offset, int size) {
+		String sql = "SELECT s.*, u.username FROM ScheduleManagementApplicationSchema.schedules s " +
+					"JOIN ScheduleManagementApplicationSchema.users u ON s.user_id = u.id " +
+					"ORDER BY s.updated_time DESC LIMIT ? OFFSET ?";
+		return jdbcTemplate.query(sql, new Object[]{size, offset}, this::mapRowWithUsername);
+	}
+
+	@Override
+	public long count() {
+		String sql = "SELECT COUNT(*) FROM ScheduleManagementApplicationSchema.schedules";
+		return jdbcTemplate.queryForObject(sql, Long.class);
+	}
+
+	private Schedule mapRowWithUsername(ResultSet rs, int rowNum) throws SQLException {
+		Schedule schedule = new Schedule();
+		schedule.setId(rs.getLong("id"));
+		schedule.setTitle(rs.getString("title"));
+		schedule.setTask(rs.getString("task"));
+		schedule.setUserName(rs.getString("u.username"));
+		schedule.setPostedTime(rs.getTimestamp("posted_time").toLocalDateTime());
+		schedule.setUpdatedTime(rs.getTimestamp("updated_time").toLocalDateTime());
+		return schedule;
 	}
 }

@@ -15,5 +15,7 @@ public interface ScheduleRepository {
 	void deleteById(Long id);
 	void update(Schedule schedule);
 	Optional<Schedule> findByIdAndPassword(Long scheduleId, String password);
+	List<Schedule> findAllWithPaging(int offset, int size);
+	long count();
 
 }

@@ -6,6 +6,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
+import com.semin.scheduler.domain.Schedule;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,14 +23,16 @@ public class ScheduleController {
 	}
 
 	@PostMapping
-	public ResponseEntity<Void> createSchedule(@RequestBody ScheduleRequest request) {
-		scheduleService.createSchedule(request);
-		return ResponseEntity.status(HttpStatus.CREATED).build();
+	public ResponseEntity<ScheduleResponse> createSchedule(@Valid @RequestBody ScheduleRequest request) {
+		return ResponseEntity.ok(scheduleService.save(request));
 	}
 
 	@GetMapping
-	public ResponseEntity<List<ScheduleResponse>> getAllSchedules() {
-		return ResponseEntity.ok(scheduleService.getAllSchedules());
+	public ResponseEntity<PageResponse<ScheduleResponse>> getAllSchedules(
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "10") int size
+	) {
+		return ResponseEntity.ok(scheduleService.getAllSchedulesWithPaging(page, size));
 	}
 
 	@GetMapping("/{id}")

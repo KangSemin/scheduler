@@ -11,6 +11,7 @@ public class ScheduleResponse {
 	private Long id;
 	private String title;
 	private String task;
+	private String userName;
 	
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm")
 	private LocalDateTime createdAt;
