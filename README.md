@@ -13,7 +13,10 @@
 
 ```mermaid
 erDiagram
-USERS ||--o{ SCHEDULES : creates
+USERS ||--o{ SCHEDULES : writes
+SCHEDULES ||--o{ COMMENTS : has
+USERS ||--o{ COMMENTS : writes
+
 USERS {
 id bigint PK
 username varchar 
@@ -29,6 +32,14 @@ task varchar
 posted_time datetime 
 updated_time datetime 
 user_id bigint FK 
+}
+COMMENTS {
+id bigint PK
+comment varchar
+posted_time datetime 
+updated_time datetime 
+user_id bigint FK
+schedule_id bigint FK
 }
 ```
 
